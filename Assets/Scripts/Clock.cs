@@ -31,12 +31,17 @@ public class Clock : MonoBehaviour
 
 
         _beatTime = 60f / _bpm;
-        InvokeRepeating("Tick", 0, _beatTime);
+        //InvokeRepeating("Tick", 0, _beatTime);
+        StartCoroutine(Tick(_beatTime));
     }
 
-    private void Tick()
+    IEnumerator Tick(float beatTime)
     {
-        _tickEvent?.Invoke();
-        Debug.Log("Tick");
+        while(true)
+        {
+            yield return new WaitForSeconds(beatTime);
+            _tickEvent?.Invoke();
+            Debug.Log("Tick");
+        }
     }
 }
