@@ -30,6 +30,7 @@ public class BeatInteractor : MonoBehaviour
         }
         else
         {
+            Debug.Log("Not on beat!");
             _noteManager.ResetBuffer();
         }
        

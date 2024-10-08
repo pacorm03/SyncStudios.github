@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,14 @@ public class BeatManager : MonoBehaviour
     AudioSource _audioSource;
     float _errorThreshold = 0.10f;
 
+    
+
+    int _lastExaminedBeat;
+    bool _windowOpen = true;
+    event Action _openWindowEvent;
+    event Action _closeWindowEvent;
+
+
     [SerializeField] private Interval[] _intervals;
 
     public void LoadInfo(int bpm, AudioSource audioSource, float errorThreshold)
@@ -20,27 +29,59 @@ public class BeatManager : MonoBehaviour
         _errorThreshold = errorThreshold;
     }
 
-    void Update()
+    public bool IsOnBeat()
+    {
+        return _windowOpen;
+    }
+
+    void FixedUpdate()
     {
         foreach (var interval in _intervals)
         {
             float clipProgress =    // Clip progress messured in samples (?). Each whole number is a black/beat.
-                ( 
-                _audioSource.timeSamples / (_audioSource.clip.frequency * interval.GetBeatLength(_bpm)) 
+                (
+                _audioSource.timeSamples / (_audioSource.clip.frequency * interval.GetBeatLength(_bpm))
                 );
             interval.CheckForNewInterval(clipProgress);
         }
+
+        CheckWindow();
     }
 
-    public bool IsOnBeat()
+    void CheckWindow()
     {
         float beatLength = 60f / _bpm;
         float clipProgress = _audioSource.timeSamples / (_audioSource.clip.frequency * beatLength);
 
-        float closestBeat = Mathf.Round(clipProgress);
+        int closestBeat =(int) Mathf.Round(clipProgress);
 
-        return clipProgress > closestBeat- _errorThreshold && clipProgress < closestBeat+ _errorThreshold;
+        if (closestBeat != _lastExaminedBeat)
+        {
+            if (!_windowOpen)
+            {
+                // Check for open window.
+                if (clipProgress > closestBeat - _errorThreshold)
+                {
+                    // Window open.
+                    _windowOpen = true;
+                    Debug.Log($"Window open! at {clipProgress}");
+                }
+            }
+            else
+            {
+                // Check for close window.
+                if (clipProgress > closestBeat + _errorThreshold)
+                {
+                    // Wndow closed.
+                    _windowOpen = false;
+                    _lastExaminedBeat = closestBeat;
+                    Debug.Log($"Window closed! at {clipProgress}");
+                }
+            }
+        }
+        
     }
+
 }
 
 [System.Serializable]
